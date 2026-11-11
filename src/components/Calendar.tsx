@@ -56,10 +56,13 @@ export function Calendar({ initialYear, initialMonth }: Props) {
   }
 
   return (
-    <section className="panel animate-fade-up-delay" aria-label="Kalender">
+    <section
+      className="panel animate-fade-up-delay border border-pine/10 bg-white/70"
+      aria-label="Kalender"
+    >
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="font-[family-name:var(--font-fraunces)] text-2xl capitalize text-pine-deep">
-          {label}
+          📅 {label}
         </h2>
         <div className="flex gap-2">
           <button
@@ -112,19 +115,19 @@ export function Calendar({ initialYear, initialMonth }: Props) {
               <span className="mt-0.5 flex h-2 items-center gap-0.5">
                 {a?.hasSleep ? (
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-white/90" : "bg-sage"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-white/90" : "bg-sleep"}`}
                     title="Lur"
                   />
                 ) : null}
                 {a?.hasWalk ? (
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-white/90" : "bg-pine"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-white/90" : "bg-walk"}`}
                     title="Tur"
                   />
                 ) : null}
                 {a?.hasMeal ? (
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-honey" : "bg-honey"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${isToday ? "bg-white/90" : "bg-meal"}`}
                     title="Måltid"
                   />
                 ) : null}
@@ -136,13 +139,13 @@ export function Calendar({ initialYear, initialMonth }: Props) {
 
       <p className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted">
         <span className="inline-flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-sage" /> Lur
+          <span className="h-1.5 w-1.5 rounded-full bg-sleep" /> 😴 Lur
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-pine" /> Tur
+          <span className="h-1.5 w-1.5 rounded-full bg-walk" /> 🐾 Tur
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-honey" /> Måltid
+          <span className="h-1.5 w-1.5 rounded-full bg-meal" /> 🥣 Måltid
         </span>
       </p>
     </section>

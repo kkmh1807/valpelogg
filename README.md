@@ -10,6 +10,7 @@ Enkel norsk webapp for daglig valpelogg: **lur**, **turer** (tisset/bæsjet) og 
 - **Kalender:** hovednavigasjon med aktivitetsprikker (lur / tur / måltid).
 - **Endre / slett:** «Slett» med bekreftelse, «Endre tid» som sekundær handling. Manuell tid for lur/tur under «Manuell tid».
 - Dobbelttrykk-beskyttelse: klient-lås + same-second dedupe på server.
+- **Passordbeskyttelse:** sett `SITE_PASSWORD` for å kreve innlogging (cookie-sesjon, 14 dager).
 
 ## Kom i gang lokalt
 
@@ -37,6 +38,9 @@ Uten Turso-hemmeligheter kjører appen i **demomodus** mot `data/local.db` (bann
 | -------------------- | -------------- | ------------------------------------------------ |
 | `TURSO_DATABASE_URL` | Ja             | Turso/libSQL database-URL (`libsql://…`)         |
 | `TURSO_AUTH_TOKEN`   | Ja             | Auth-token fra Turso-dashboard                   |
+| `SITE_PASSWORD`      | Ja (anbefalt)  | Felles passord for innlogging — del kun med ønskede besøkende |
+
+Uten `SITE_PASSWORD` er appen åpen (praktisk lokalt). Med verdien satt låses alle sider og API-er bak `/login`.
 
 Kopier `.env.example` til `.env.local` og fyll inn verdier:
 
@@ -77,6 +81,7 @@ git push -u origin master
 3. Under **Environment Variables**, legg inn:
    - `TURSO_DATABASE_URL`
    - `TURSO_AUTH_TOKEN`
+   - `SITE_PASSWORD` (velg et sterkt passord du deler med de som skal logge)
 4. Deploy.
 
 Lokal fil-DB (`file:./data/local.db`) er **ikke** egnet på Vercel — bruk alltid Turso i produksjon.

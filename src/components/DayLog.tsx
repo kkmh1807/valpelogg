@@ -154,7 +154,7 @@ export function DayLog({ day }: Props) {
     <div className="space-y-5">
       <header className="animate-fade-up">
         <p className="text-sm font-medium uppercase tracking-[0.14em] text-pine">
-          Dagens logg
+          🐶 Dagens logg
         </p>
         <h1 className="mt-1 font-[family-name:var(--font-fraunces)] text-3xl capitalize text-pine-deep sm:text-4xl">
           {formatDayHeading(day)}
@@ -173,10 +173,16 @@ export function DayLog({ day }: Props) {
       ) : null}
 
       {/* Sleep */}
-      <section className="panel animate-fade-up space-y-4">
-        <div className="flex items-end justify-between gap-3">
+      <section className="panel animate-fade-up space-y-4 !border-2 !border-sleep/40 !bg-sleep-soft">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sleep/20 text-lg"
+            aria-hidden
+          >
+            😴
+          </span>
           <div>
-            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-pine-deep">
+            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-sleep-deep">
               Lur
             </h2>
             <p className="text-sm text-muted">Ett trykk med enhetens klokke</p>
@@ -184,30 +190,32 @@ export function DayLog({ day }: Props) {
         </div>
 
         {ongoing ? (
-          <div className="animate-soft-pulse rounded-2xl border border-pine/20 bg-pine/8 px-4 py-4">
-            <p className="text-sm font-semibold text-pine-deep">Lur pågår</p>
+          <div className="animate-soft-pulse rounded-2xl border border-sleep/30 bg-white/80 px-4 py-4">
+            <p className="text-sm font-semibold text-sleep-deep">
+              💤 Lur pågår
+            </p>
             <p className="mt-1 text-muted">
               Startet {formatClock(ongoing.start_at)} ·{" "}
               {formatDuration(ongoing.start_at, null)}
             </p>
             <button
               type="button"
-              className="btn btn-primary mt-3 w-full sm:w-auto"
+              className="btn mt-3 w-full bg-sleep text-white shadow-md shadow-sleep/30 sm:w-auto hover:bg-sleep-deep"
               disabled={busy !== null}
               onClick={() => void endSleep()}
             >
-              {busy === "sleep-end" ? "Avslutter…" : "Avslutt lur"}
+              {busy === "sleep-end" ? "Avslutter…" : "☀️ Avslutt lur"}
             </button>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              className="btn btn-primary"
+              className="btn bg-sleep text-white shadow-md shadow-sleep/30 hover:bg-sleep-deep"
               disabled={busy !== null}
               onClick={() => void startSleep()}
             >
-              {busy === "sleep-start" ? "Starter…" : "Start lur"}
+              {busy === "sleep-start" ? "Starter…" : "😴 Start lur"}
             </button>
             <button
               type="button"
@@ -220,12 +228,12 @@ export function DayLog({ day }: Props) {
         )}
 
         {showManualSleep && !ongoing ? (
-          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/50 p-3">
+          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3">
             <label className="text-sm text-muted">
               Starttid
               <input
                 type="datetime-local"
-                className="mt-1 block rounded-lg border border-pine/20 bg-white px-3 py-2 text-ink"
+                className="mt-1 block rounded-lg border border-sleep/40 bg-white px-3 py-2 text-ink"
                 value={manualSleepStart}
                 onChange={(e) => setManualSleepStart(e.target.value)}
               />
@@ -247,11 +255,11 @@ export function DayLog({ day }: Props) {
           {(log?.sleep ?? []).map((s) => (
             <li
               key={s.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/55 px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
             >
               <div>
                 <p className="font-medium text-ink">
-                  {formatClock(s.start_at)}
+                  💤 {formatClock(s.start_at)}
                   {s.end_at ? ` – ${formatClock(s.end_at)}` : " – pågår"}
                 </p>
                 <p className="text-xs text-muted">
@@ -280,20 +288,28 @@ export function DayLog({ day }: Props) {
             </li>
           ))}
           {(log?.sleep.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen lurer denne dagen.</li>
+            <li className="text-sm text-muted">Ingen lurer denne dagen ennå 🌙</li>
           ) : null}
         </ul>
       </section>
 
       {/* Walks */}
-      <section className="panel animate-fade-up space-y-4">
-        <div>
-          <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-pine-deep">
-            Tur
-          </h2>
-          <p className="text-sm text-muted">
-            Ett trykk logger tur nå. Huk av for tisset / bæsjet.
-          </p>
+      <section className="panel animate-fade-up space-y-4 !border-2 !border-walk/40 !bg-walk-soft">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-walk/20 text-lg"
+            aria-hidden
+          >
+            🐾
+          </span>
+          <div>
+            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-walk-deep">
+              Tur
+            </h2>
+            <p className="text-sm text-muted">
+              Ett trykk logger tur nå. Huk av for tisset / bæsjet.
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -303,7 +319,7 @@ export function DayLog({ day }: Props) {
             data-on={peed}
             onClick={() => setPeed((v) => !v)}
           >
-            Tisset
+            💧 Tisset
           </button>
           <button
             type="button"
@@ -311,18 +327,18 @@ export function DayLog({ day }: Props) {
             data-on={pooped}
             onClick={() => setPooped((v) => !v)}
           >
-            Bæsjet
+            💩 Bæsjet
           </button>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn bg-walk text-white shadow-md shadow-walk/30 hover:bg-walk-deep"
             disabled={busy !== null}
             onClick={() => void addWalk()}
           >
-            {busy === "walk" ? "Logger…" : "Ny tur"}
+            {busy === "walk" ? "Logger…" : "🦮 Ny tur"}
           </button>
           <button
             type="button"
@@ -334,12 +350,12 @@ export function DayLog({ day }: Props) {
         </div>
 
         {showManualWalk ? (
-          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/50 p-3">
+          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3">
             <label className="text-sm text-muted">
               Tidspunkt
               <input
                 type="datetime-local"
-                className="mt-1 block rounded-lg border border-pine/20 bg-white px-3 py-2 text-ink"
+                className="mt-1 block rounded-lg border border-walk/40 bg-white px-3 py-2 text-ink"
                 value={manualWalkAt}
                 onChange={(e) => setManualWalkAt(e.target.value)}
               />
@@ -359,11 +375,11 @@ export function DayLog({ day }: Props) {
           {(log?.walks ?? []).map((w) => (
             <li
               key={w.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/55 px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
             >
               <div>
                 <p className="font-medium text-ink">
-                  {formatClock(w.started_at)}
+                  🐾 {formatClock(w.started_at)}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-1">
                   <button
@@ -380,7 +396,7 @@ export function DayLog({ day }: Props) {
                       })
                     }
                   >
-                    Tisset
+                    💧 Tisset
                   </button>
                   <button
                     type="button"
@@ -396,7 +412,7 @@ export function DayLog({ day }: Props) {
                       })
                     }
                   >
-                    Bæsjet
+                    💩 Bæsjet
                   </button>
                 </div>
               </div>
@@ -422,36 +438,44 @@ export function DayLog({ day }: Props) {
             </li>
           ))}
           {(log?.walks.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen turer denne dagen.</li>
+            <li className="text-sm text-muted">Ingen turer denne dagen ennå 🌿</li>
           ) : null}
         </ul>
       </section>
 
       {/* Meals */}
-      <section className="panel animate-fade-up space-y-4">
-        <div>
-          <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-pine-deep">
-            Måltid
-          </h2>
-          <p className="text-sm text-muted">Ett trykk logger tidspunktet</p>
+      <section className="panel animate-fade-up space-y-4 !border-2 !border-meal/40 !bg-meal-soft">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-meal/20 text-lg"
+            aria-hidden
+          >
+            🥣
+          </span>
+          <div>
+            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-meal-deep">
+              Måltid
+            </h2>
+            <p className="text-sm text-muted">Ett trykk logger tidspunktet</p>
+          </div>
         </div>
 
         <button
           type="button"
-          className="btn btn-primary"
+          className="btn bg-meal text-white shadow-md shadow-meal/30 hover:bg-meal-deep"
           disabled={busy !== null}
           onClick={() => void addMeal()}
         >
-          {busy === "meal" ? "Logger…" : "Måltid"}
+          {busy === "meal" ? "Logger…" : "🥣 Måltid"}
         </button>
 
         <ul className="space-y-2">
           {(log?.meals ?? []).map((m) => (
             <li
               key={m.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/55 px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
             >
-              <p className="font-medium text-ink">{formatClock(m.fed_at)}</p>
+              <p className="font-medium text-ink">🍖 {formatClock(m.fed_at)}</p>
               <div className="flex flex-wrap gap-1">
                 <button
                   type="button"
@@ -474,7 +498,7 @@ export function DayLog({ day }: Props) {
             </li>
           ))}
           {(log?.meals.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen måltider denne dagen.</li>
+            <li className="text-sm text-muted">Ingen måltider denne dagen ennå 🦴</li>
           ) : null}
         </ul>
       </section>
@@ -482,7 +506,7 @@ export function DayLog({ day }: Props) {
       {/* Edit modals */}
       {editSleep ? (
         <EditDialog
-          title="Endre lur"
+          title="😴 Endre lur"
           onClose={() => setEditSleep(null)}
           onSave={async (start, end) => {
             await withLock("edit-sleep", async () => {
@@ -506,7 +530,7 @@ export function DayLog({ day }: Props) {
 
       {editWalk ? (
         <EditDialog
-          title="Endre tur"
+          title="🐾 Endre tur"
           onClose={() => setEditWalk(null)}
           onSave={async (start) => {
             await withLock("edit-walk", async () => {
@@ -523,7 +547,7 @@ export function DayLog({ day }: Props) {
 
       {editMeal ? (
         <EditDialog
-          title="Endre måltid"
+          title="🥣 Endre måltid"
           onClose={() => setEditMeal(null)}
           onSave={async (start) => {
             await withLock("edit-meal", async () => {
