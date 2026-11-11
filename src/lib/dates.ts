@@ -56,15 +56,26 @@ export function formatDayHeading(day: string): string {
   });
 }
 
-export function formatDuration(startIso: string, endIso: string | null): string {
+export function durationMinutes(
+  startIso: string,
+  endIso: string | null,
+): number {
   const start = new Date(startIso).getTime();
   const end = endIso ? new Date(endIso).getTime() : Date.now();
-  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "";
-  const mins = Math.round((end - start) / 60_000);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
+  return Math.round((end - start) / 60_000);
+}
+
+export function formatMinutes(mins: number): string {
+  if (mins <= 0) return "0 min";
   if (mins < 60) return `${mins} min`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m === 0 ? `${h} t` : `${h} t ${m} min`;
+}
+
+export function formatDuration(startIso: string, endIso: string | null): string {
+  return formatMinutes(durationMinutes(startIso, endIso));
 }
 
 export function monthLabel(year: number, month: number): string {

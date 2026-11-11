@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiJson } from "@/lib/api";
 import {
+  durationMinutes,
   formatClock,
   formatDayHeading,
   formatDuration,
+  formatMinutes,
   toDayKey,
 } from "@/lib/dates";
 import type { DayLog as DayLogType, Meal, SleepSession, Walk } from "@/lib/types";
@@ -64,6 +66,15 @@ export function DayLog({ day }: Props) {
     };
   }, [day]);
 
+  // Oppdater regnskap mens en lur pågår
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const hasOngoing = (log?.sleep ?? []).some((s) => s.end_at === null);
+    if (!hasOngoing) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [log?.sleep]);
+
   async function withLock(key: string, fn: () => Promise<void>) {
     if (lock.current) return;
     lock.current = true;
@@ -84,6 +95,16 @@ export function DayLog({ day }: Props) {
     log?.ongoingSleep && (isToday || log.ongoingSleep.day === day)
       ? log.ongoingSleep
       : null;
+
+  const sleepMinutes = (log?.sleep ?? []).reduce(
+    (sum, s) => sum + durationMinutes(s.start_at, s.end_at),
+    0,
+  );
+  const walkCount = log?.walks.length ?? 0;
+  const peedCount = (log?.walks ?? []).filter((w) => w.peed).length;
+  const poopedCount = (log?.walks ?? []).filter((w) => w.pooped).length;
+  const mealCount = log?.meals.length ?? 0;
+  const hasOngoingSleep = (log?.sleep ?? []).some((s) => s.end_at === null);
 
   async function startSleep(startAt?: string) {
     await withLock("sleep-start", async () => {
@@ -171,6 +192,57 @@ export function DayLog({ day }: Props) {
           {error}
         </p>
       ) : null}
+
+      {/* Dagsregnskap */}
+      <section
+        className="panel animate-fade-up border border-pine/15 bg-white/75"
+        aria-label="Dagens regnskap"
+      >
+        <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-pine-deep">
+          📊 Dagens regnskap
+        </h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-sleep/30 bg-sleep-soft px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sleep-deep">
+              😴 Søvn
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-fraunces)] text-2xl text-sleep-deep">
+              {formatMinutes(sleepMinutes)}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {(log?.sleep.length ?? 0) === 0
+                ? "Ingen lurer ennå"
+                : `${log?.sleep.length} ${log?.sleep.length === 1 ? "lur" : "lurer"}${hasOngoingSleep ? " · en pågår" : ""}`}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-walk/30 bg-walk-soft px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-walk-deep">
+              🐾 Turer ute
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-fraunces)] text-2xl text-walk-deep">
+              {walkCount} {walkCount === 1 ? "tur" : "turer"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {walkCount === 0
+                ? "Ingen turer ennå"
+                : `💧 ${peedCount} tisset · 💩 ${poopedCount} bæsjet`}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-meal/30 bg-meal-soft px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-meal-deep">
+              🥣 Måltider
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-fraunces)] text-2xl text-meal-deep">
+              {mealCount} {mealCount === 1 ? "måltid" : "måltider"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {mealCount === 0 ? "Ingen måltider ennå" : "Logget i dag"}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Sleep */}
       <section className="panel animate-fade-up space-y-4 !border-2 !border-sleep/40 !bg-sleep-soft">
