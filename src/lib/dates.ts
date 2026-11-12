@@ -1,11 +1,16 @@
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Format a Date as YYYY-MM-DD in local time. */
+/** App calendar day — always Norway time (not Vercel UTC). */
+export const APP_TIMEZONE = "Europe/Oslo";
+
+/** Format a Date as YYYY-MM-DD in Europe/Oslo. */
 export function toDayKey(date: Date = new Date()): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 export function isValidDayKey(day: string): boolean {
@@ -40,6 +45,7 @@ export function formatClock(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleTimeString("nb-NO", {
+    timeZone: APP_TIMEZONE,
     hour: "2-digit",
     minute: "2-digit",
   });

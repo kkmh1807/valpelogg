@@ -4,6 +4,8 @@ import { DayLog } from "@/components/DayLog";
 import { SiteHeader } from "@/components/SiteHeader";
 import { isValidDayKey, toDayKey } from "@/lib/dates";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: Promise<{ day: string }>;
 };
