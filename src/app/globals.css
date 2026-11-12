@@ -21,6 +21,12 @@
   --meal: #e07a4a;
   --meal-deep: #c46335;
   --meal-soft: #ffe6d6;
+  --accident: #5b8fb9;
+  --accident-deep: #3f6f96;
+  --accident-soft: #e3f0f8;
+  --poop: #9a7348;
+  --poop-deep: #735533;
+  --poop-soft: #f3ebe1;
   --card: rgba(255, 255, 255, 0.72);
   --ring: rgba(45, 106, 90, 0.28);
   --background: var(--foam);
@@ -49,6 +55,12 @@
   --color-meal: var(--meal);
   --color-meal-deep: var(--meal-deep);
   --color-meal-soft: var(--meal-soft);
+  --color-accident: var(--accident);
+  --color-accident-deep: var(--accident-deep);
+  --color-accident-soft: var(--accident-soft);
+  --color-poop: var(--poop);
+  --color-poop-deep: var(--poop-deep);
+  --color-poop-soft: var(--poop-soft);
   --font-sans: var(--font-manrope);
   --font-display: var(--font-fraunces);
 }

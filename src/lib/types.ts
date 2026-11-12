@@ -27,6 +27,16 @@ export type DayLog = {
   walks: Walk[];
   meals: Meal[];
   ongoingSleep: SleepSession | null;
+  indoorPeeAccidents: number;
+  indoorPoopAccidents: number;
+};
+
+export type AccidentKind = "pee" | "poop";
+
+export type AccidentDay = {
+  day: string;
+  pee: number;
+  poop: number;
 };
 
 export type DayActivity = {

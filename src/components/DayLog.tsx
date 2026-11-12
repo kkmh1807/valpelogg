@@ -10,7 +10,13 @@ import {
   formatMinutes,
   toDayKey,
 } from "@/lib/dates";
-import type { DayLog as DayLogType, Meal, SleepSession, Walk } from "@/lib/types";
+import type {
+  AccidentKind,
+  DayLog as DayLogType,
+  Meal,
+  SleepSession,
+  Walk,
+} from "@/lib/types";
 
 type Props = {
   day: string;
@@ -104,6 +110,8 @@ export function DayLog({ day }: Props) {
   const peedCount = (log?.walks ?? []).filter((w) => w.peed).length;
   const poopedCount = (log?.walks ?? []).filter((w) => w.pooped).length;
   const mealCount = log?.meals.length ?? 0;
+  const peeAccidents = log?.indoorPeeAccidents ?? 0;
+  const poopAccidents = log?.indoorPoopAccidents ?? 0;
   const hasOngoingSleep = (log?.sleep ?? []).some((s) => s.end_at === null);
 
   async function startSleep(startAt?: string) {
@@ -155,6 +163,15 @@ export function DayLog({ day }: Props) {
     });
   }
 
+  async function changeAccidents(kind: AccidentKind, delta: number) {
+    await withLock(`accidents-${kind}`, async () => {
+      await apiJson("/api/accidents", {
+        method: "PATCH",
+        body: JSON.stringify({ day, kind, delta }),
+      });
+    });
+  }
+
   async function confirmDelete(
     label: string,
     url: string,
@@ -201,7 +218,7 @@ export function DayLog({ day }: Props) {
         <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-pine-deep">
           📊 Dagens regnskap
         </h2>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-sleep/30 bg-sleep-soft px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-sleep-deep">
               😴 Søvn
@@ -240,6 +257,96 @@ export function DayLog({ day }: Props) {
             <p className="mt-0.5 text-xs text-muted">
               {mealCount === 0 ? "Ingen måltider ennå" : "Logget i dag"}
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-accident/30 bg-accident-soft px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accident-deep">
+              💧💩 Uhell
+            </p>
+            <p className="mt-1 font-[family-name:var(--font-fraunces)] text-2xl text-accident-deep">
+              {peeAccidents + poopAccidents}
+            </p>
+            <p className="mt-0.5 text-xs text-muted">
+              {peeAccidents + poopAccidents === 0
+                ? "Ingen i dag 🎉"
+                : `💧 ${peeAccidents} · 💩 ${poopAccidents}`}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Indoor accidents counters */}
+      <section className="panel animate-fade-up space-y-5 !border-2 !border-accident/40 !bg-accident-soft/70">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accident/20 text-lg"
+            aria-hidden
+          >
+            🏠
+          </span>
+          <div>
+            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-accident-deep">
+              Uhell inne
+            </h2>
+            <p className="text-sm text-muted">Tiss og bæsje — enkel teller</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-accident/30 bg-white/70 px-3 py-3">
+            <p className="text-sm font-semibold text-accident-deep">
+              💧 Tisseuhell
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary h-11 w-11 text-xl"
+                disabled={busy !== null || peeAccidents <= 0}
+                aria-label="Fjern tisseuhell"
+                onClick={() => void changeAccidents("pee", -1)}
+              >
+                −
+              </button>
+              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-accident-deep">
+                {peeAccidents}
+              </p>
+              <button
+                type="button"
+                className="btn h-11 w-11 bg-accident text-xl text-white shadow-md shadow-accident/25 hover:bg-accident-deep"
+                disabled={busy !== null}
+                aria-label="Legg til tisseuhell"
+                onClick={() => void changeAccidents("pee", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-poop/30 bg-poop-soft px-3 py-3">
+            <p className="text-sm font-semibold text-poop-deep">💩 Bæsjeuhell</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary h-11 w-11 text-xl"
+                disabled={busy !== null || poopAccidents <= 0}
+                aria-label="Fjern bæsjeuhell"
+                onClick={() => void changeAccidents("poop", -1)}
+              >
+                −
+              </button>
+              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-poop-deep">
+                {poopAccidents}
+              </p>
+              <button
+                type="button"
+                className="btn h-11 w-11 bg-poop text-xl text-white shadow-md shadow-poop/25 hover:bg-poop-deep"
+                disabled={busy !== null}
+                aria-label="Legg til bæsjeuhell"
+                onClick={() => void changeAccidents("poop", 1)}
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
       </section>

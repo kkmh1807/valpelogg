@@ -13,6 +13,13 @@ export function toDayKey(date: Date = new Date()): string {
   }).format(date);
 }
 
+/** Shift a YYYY-MM-DD key by whole calendar days (UTC-safe). */
+export function shiftDayKey(day: string, delta: number): string {
+  const [y, m, d] = day.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + delta));
+  return dt.toISOString().slice(0, 10);
+}
+
 export function isValidDayKey(day: string): boolean {
   if (!DAY_RE.test(day)) return false;
   const [y, m, d] = day.split("-").map(Number);

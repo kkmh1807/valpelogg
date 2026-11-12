@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AccidentChart } from "@/components/AccidentChart";
 import { Calendar } from "@/components/Calendar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { toDayKey } from "@/lib/dates";
@@ -61,6 +62,10 @@ export default function HomePage() {
 
       <div id="kalender" className="scroll-mt-6">
         <Calendar initialYear={year} initialMonth={month} />
+      </div>
+
+      <div id="tisseuhell" className="scroll-mt-6">
+        <AccidentChart endDay={today} days={14} />
       </div>
     </main>
   );
