@@ -46,7 +46,11 @@ export function DayLog({ day }: Props) {
   const [editSleep, setEditSleep] = useState<SleepSession | null>(null);
   const [editWalk, setEditWalk] = useState<Walk | null>(null);
   const [editMeal, setEditMeal] = useState<Meal | null>(null);
+  const [expandSleep, setExpandSleep] = useState(false);
+  const [expandWalks, setExpandWalks] = useState(false);
   const lock = useRef(false);
+
+  const LIST_PREVIEW = 3;
 
   const today = toDayKey();
   const isToday = day === today;
@@ -275,82 +279,6 @@ export function DayLog({ day }: Props) {
         </div>
       </section>
 
-      {/* Indoor accidents counters */}
-      <section className="panel animate-fade-up space-y-5 !border-2 !border-accident/40 !bg-accident-soft/70">
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accident/20 text-lg"
-            aria-hidden
-          >
-            🏠
-          </span>
-          <div>
-            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-accident-deep">
-              Uhell inne
-            </h2>
-            <p className="text-sm text-muted">Tiss og bæsje — enkel teller</p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-accident/30 bg-white/70 px-3 py-3">
-            <p className="text-sm font-semibold text-accident-deep">
-              💧 Tisseuhell
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className="btn btn-secondary h-11 w-11 text-xl"
-                disabled={busy !== null || peeAccidents <= 0}
-                aria-label="Fjern tisseuhell"
-                onClick={() => void changeAccidents("pee", -1)}
-              >
-                −
-              </button>
-              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-accident-deep">
-                {peeAccidents}
-              </p>
-              <button
-                type="button"
-                className="btn h-11 w-11 bg-accident text-xl text-white shadow-md shadow-accident/25 hover:bg-accident-deep"
-                disabled={busy !== null}
-                aria-label="Legg til tisseuhell"
-                onClick={() => void changeAccidents("pee", 1)}
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-poop/30 bg-poop-soft px-3 py-3">
-            <p className="text-sm font-semibold text-poop-deep">💩 Bæsjeuhell</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                className="btn btn-secondary h-11 w-11 text-xl"
-                disabled={busy !== null || poopAccidents <= 0}
-                aria-label="Fjern bæsjeuhell"
-                onClick={() => void changeAccidents("poop", -1)}
-              >
-                −
-              </button>
-              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-poop-deep">
-                {poopAccidents}
-              </p>
-              <button
-                type="button"
-                className="btn h-11 w-11 bg-poop text-xl text-white shadow-md shadow-poop/25 hover:bg-poop-deep"
-                disabled={busy !== null}
-                aria-label="Legg til bæsjeuhell"
-                onClick={() => void changeAccidents("poop", 1)}
-              >
-                +
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Sleep */}
       <section className="panel animate-fade-up space-y-4 !border-2 !border-sleep/40 !bg-sleep-soft">
         <div className="flex items-center gap-3">
@@ -430,46 +358,70 @@ export function DayLog({ day }: Props) {
           </div>
         ) : null}
 
-        <ul className="space-y-2">
-          {(log?.sleep ?? []).map((s) => (
-            <li
-              key={s.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
-            >
-              <div>
-                <p className="font-medium text-ink">
-                  💤 {formatClock(s.start_at)}
-                  {s.end_at ? ` – ${formatClock(s.end_at)}` : " – pågår"}
-                </p>
-                <p className="text-xs text-muted">
-                  {formatDuration(s.start_at, s.end_at) || "—"}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-1">
+        {(() => {
+          const sleepNewest = [...(log?.sleep ?? [])].reverse();
+          const sleepVisible = expandSleep
+            ? sleepNewest
+            : sleepNewest.slice(0, LIST_PREVIEW);
+          const sleepExtra = sleepNewest.length - LIST_PREVIEW;
+          return (
+            <>
+              <ul className="space-y-2">
+                {sleepVisible.map((s) => (
+                  <li
+                    key={s.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
+                  >
+                    <div>
+                      <p className="font-medium text-ink">
+                        💤 {formatClock(s.start_at)}
+                        {s.end_at ? ` – ${formatClock(s.end_at)}` : " – pågår"}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {formatDuration(s.start_at, s.end_at) || "—"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setEditSleep(s)}
+                      >
+                        Endre tid
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        disabled={busy !== null}
+                        onClick={() =>
+                          void confirmDelete("denne luren", `/api/sleep/${s.id}`)
+                        }
+                      >
+                        Slett
+                      </button>
+                    </div>
+                  </li>
+                ))}
+                {sleepNewest.length === 0 ? (
+                  <li className="text-sm text-muted">
+                    Ingen lurer denne dagen ennå 🌙
+                  </li>
+                ) : null}
+              </ul>
+              {sleepExtra > 0 ? (
                 <button
                   type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setEditSleep(s)}
+                  className="btn btn-ghost w-full text-sleep-deep"
+                  onClick={() => setExpandSleep((v) => !v)}
                 >
-                  Endre tid
+                  {expandSleep
+                    ? "Vis færre"
+                    : `Vis ${sleepExtra} eldre lur${sleepExtra === 1 ? "" : "er"}`}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  disabled={busy !== null}
-                  onClick={() =>
-                    void confirmDelete("denne luren", `/api/sleep/${s.id}`)
-                  }
-                >
-                  Slett
-                </button>
-              </div>
-            </li>
-          ))}
-          {(log?.sleep.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen lurer denne dagen ennå 🌙</li>
-          ) : null}
-        </ul>
+              ) : null}
+            </>
+          );
+        })()}
       </section>
 
       {/* Walks */}
@@ -550,76 +502,100 @@ export function DayLog({ day }: Props) {
           </div>
         ) : null}
 
-        <ul className="space-y-2">
-          {(log?.walks ?? []).map((w) => (
-            <li
-              key={w.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
-            >
-              <div>
-                <p className="font-medium text-ink">
-                  🐾 {formatClock(w.started_at)}
-                </p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  <button
-                    type="button"
-                    className="toggle"
-                    data-on={w.peed}
-                    disabled={busy !== null}
-                    onClick={() =>
-                      void withLock(`walk-peed-${w.id}`, async () => {
-                        await apiJson(`/api/walks/${w.id}`, {
-                          method: "PATCH",
-                          body: JSON.stringify({ peed: !w.peed }),
-                        });
-                      })
-                    }
+        {(() => {
+          const walksNewest = [...(log?.walks ?? [])].reverse();
+          const walksVisible = expandWalks
+            ? walksNewest
+            : walksNewest.slice(0, LIST_PREVIEW);
+          const walksExtra = walksNewest.length - LIST_PREVIEW;
+          return (
+            <>
+              <ul className="space-y-2">
+                {walksVisible.map((w) => (
+                  <li
+                    key={w.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
                   >
-                    💧 Tisset
-                  </button>
-                  <button
-                    type="button"
-                    className="toggle"
-                    data-on={w.pooped}
-                    disabled={busy !== null}
-                    onClick={() =>
-                      void withLock(`walk-poop-${w.id}`, async () => {
-                        await apiJson(`/api/walks/${w.id}`, {
-                          method: "PATCH",
-                          body: JSON.stringify({ pooped: !w.pooped }),
-                        });
-                      })
-                    }
-                  >
-                    💩 Bæsjet
-                  </button>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1">
+                    <div>
+                      <p className="font-medium text-ink">
+                        🐾 {formatClock(w.started_at)}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          className="toggle"
+                          data-on={w.peed}
+                          disabled={busy !== null}
+                          onClick={() =>
+                            void withLock(`walk-peed-${w.id}`, async () => {
+                              await apiJson(`/api/walks/${w.id}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ peed: !w.peed }),
+                              });
+                            })
+                          }
+                        >
+                          💧 Tisset
+                        </button>
+                        <button
+                          type="button"
+                          className="toggle"
+                          data-on={w.pooped}
+                          disabled={busy !== null}
+                          onClick={() =>
+                            void withLock(`walk-poop-${w.id}`, async () => {
+                              await apiJson(`/api/walks/${w.id}`, {
+                                method: "PATCH",
+                                body: JSON.stringify({ pooped: !w.pooped }),
+                              });
+                            })
+                          }
+                        >
+                          💩 Bæsjet
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={() => setEditWalk(w)}
+                      >
+                        Endre tid
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        disabled={busy !== null}
+                        onClick={() =>
+                          void confirmDelete("denne turen", `/api/walks/${w.id}`)
+                        }
+                      >
+                        Slett
+                      </button>
+                    </div>
+                  </li>
+                ))}
+                {walksNewest.length === 0 ? (
+                  <li className="text-sm text-muted">
+                    Ingen turer denne dagen ennå 🌿
+                  </li>
+                ) : null}
+              </ul>
+              {walksExtra > 0 ? (
                 <button
                   type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setEditWalk(w)}
+                  className="btn btn-ghost w-full text-walk-deep"
+                  onClick={() => setExpandWalks((v) => !v)}
                 >
-                  Endre tid
+                  {expandWalks
+                    ? "Vis færre"
+                    : `Vis ${walksExtra} eldre tur${walksExtra === 1 ? "" : "er"}`}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  disabled={busy !== null}
-                  onClick={() =>
-                    void confirmDelete("denne turen", `/api/walks/${w.id}`)
-                  }
-                >
-                  Slett
-                </button>
-              </div>
-            </li>
-          ))}
-          {(log?.walks.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen turer denne dagen ennå 🌿</li>
-          ) : null}
-        </ul>
+              ) : null}
+            </>
+          );
+        })()}
       </section>
 
       {/* Meals */}
@@ -680,6 +656,82 @@ export function DayLog({ day }: Props) {
             <li className="text-sm text-muted">Ingen måltider denne dagen ennå 🦴</li>
           ) : null}
         </ul>
+      </section>
+
+      {/* Indoor accidents counters — nest etter lur/tur/måltid */}
+      <section className="panel animate-fade-up space-y-5 !border-2 !border-accident/40 !bg-accident-soft/70">
+        <div className="flex items-center gap-3">
+          <span
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accident/20 text-lg"
+            aria-hidden
+          >
+            🏠
+          </span>
+          <div>
+            <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-accident-deep">
+              Uhell inne
+            </h2>
+            <p className="text-sm text-muted">Tiss og bæsje — enkel teller</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-accident/30 bg-white/70 px-3 py-3">
+            <p className="text-sm font-semibold text-accident-deep">
+              💧 Tisseuhell
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary h-11 w-11 text-xl"
+                disabled={busy !== null || peeAccidents <= 0}
+                aria-label="Fjern tisseuhell"
+                onClick={() => void changeAccidents("pee", -1)}
+              >
+                −
+              </button>
+              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-accident-deep">
+                {peeAccidents}
+              </p>
+              <button
+                type="button"
+                className="btn h-11 w-11 bg-accident text-xl text-white shadow-md shadow-accident/25 hover:bg-accident-deep"
+                disabled={busy !== null}
+                aria-label="Legg til tisseuhell"
+                onClick={() => void changeAccidents("pee", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-poop/30 bg-poop-soft px-3 py-3">
+            <p className="text-sm font-semibold text-poop-deep">💩 Bæsjeuhell</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="btn btn-secondary h-11 w-11 text-xl"
+                disabled={busy !== null || poopAccidents <= 0}
+                aria-label="Fjern bæsjeuhell"
+                onClick={() => void changeAccidents("poop", -1)}
+              >
+                −
+              </button>
+              <p className="min-w-[2.5rem] text-center font-[family-name:var(--font-fraunces)] text-3xl text-poop-deep">
+                {poopAccidents}
+              </p>
+              <button
+                type="button"
+                className="btn h-11 w-11 bg-poop text-xl text-white shadow-md shadow-poop/25 hover:bg-poop-deep"
+                disabled={busy !== null}
+                aria-label="Legg til bæsjeuhell"
+                onClick={() => void changeAccidents("poop", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Edit modals */}

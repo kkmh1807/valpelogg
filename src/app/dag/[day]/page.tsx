@@ -31,7 +31,7 @@ export default async function DayPage({ params }: Props) {
           ) : null
         }
       />
-      <DayLog day={day} />
+      <DayLog key={day} day={day} />
     </main>
   );
 }
