@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   SESSION_COOKIE,
   createSessionValue,
@@ -40,6 +41,9 @@ export default async function LoginPage({ searchParams }: Props) {
 
   return (
     <main className="mx-auto flex min-h-[80vh] w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
+      <div className="mb-6 flex justify-end">
+        <ThemeToggle />
+      </div>
       <h1 className="font-[family-name:var(--font-fraunces)] text-3xl text-pine-deep">
         🐶 Valpelogg
       </h1>
@@ -59,7 +63,7 @@ export default async function LoginPage({ searchParams }: Props) {
             autoFocus
             autoComplete="current-password"
             placeholder="Passord"
-            className="w-full rounded-xl border border-pine/20 bg-white px-3 py-2.5 text-ink outline-none focus:ring-2 focus:ring-pine/30"
+            className="w-full rounded-xl border border-pine/20 bg-surface-strong px-3 py-2.5 text-ink outline-none focus:ring-2 focus:ring-pine/30"
           />
           {feil ? (
             <p className="text-sm text-warn">Feil passord. Prøv igjen.</p>

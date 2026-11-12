@@ -39,6 +39,12 @@ export type AccidentDay = {
   poop: number;
 };
 
+export type CareDay = {
+  day: string;
+  sleepMinutes: number;
+  walkCount: number;
+};
+
 export type DayActivity = {
   day: string;
   hasSleep: boolean;

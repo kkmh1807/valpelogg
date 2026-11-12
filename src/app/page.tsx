@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccidentChart } from "@/components/AccidentChart";
+import { CareCharts } from "@/components/CareCharts";
 import { Calendar } from "@/components/Calendar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { toDayKey } from "@/lib/dates";
@@ -12,9 +13,9 @@ export default function HomePage() {
   const [year, month] = today.split("-").map(Number);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-16 pt-6 sm:px-6">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-16 pt-0 sm:px-6">
       <SiteHeader />
-      <section className="relative flex min-h-[68vh] flex-col justify-center py-8">
+      <section className="relative flex min-h-[70vh] flex-col justify-center py-8">
         <div
           className="animate-float-soft pointer-events-none absolute -right-6 top-10 h-40 w-40 rounded-full bg-sleep/20 blur-2xl sm:h-52 sm:w-52"
           aria-hidden
@@ -64,7 +65,8 @@ export default function HomePage() {
         <Calendar initialYear={year} initialMonth={month} />
       </div>
 
-      <div id="tisseuhell" className="scroll-mt-6">
+      <div id="statistikk" className="scroll-mt-6">
+        <CareCharts endDay={today} days={14} />
         <AccidentChart endDay={today} days={14} />
       </div>
     </main>

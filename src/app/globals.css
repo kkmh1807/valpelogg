@@ -28,7 +28,44 @@
   --poop-deep: #735533;
   --poop-soft: #f3ebe1;
   --card: rgba(255, 255, 255, 0.72);
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: #ffffff;
   --ring: rgba(45, 106, 90, 0.28);
+  --background: var(--foam);
+  --foreground: var(--ink);
+}
+
+html.dark {
+  color-scheme: dark;
+  --pine: #6fbfa8;
+  --pine-deep: #b7e0d2;
+  --sage: #7a9f90;
+  --foam: #15201c;
+  --mist: #24312c;
+  --sky: #101816;
+  --ink: #e7f1ec;
+  --muted: #9bb0a7;
+  --honey: #d2b36a;
+  --warn: #e08a8a;
+  --sleep: #8b9cf0;
+  --sleep-deep: #c5cef8;
+  --sleep-soft: #2a3148;
+  --walk: #5cbc9a;
+  --walk-deep: #b6e8d5;
+  --walk-soft: #1e3a32;
+  --meal: #e89568;
+  --meal-deep: #f3c4a8;
+  --meal-soft: #3a2a22;
+  --accident: #7aafd0;
+  --accident-deep: #b7d7ea;
+  --accident-soft: #1f303a;
+  --poop: #c4a06e;
+  --poop-deep: #e2c9a4;
+  --poop-soft: #32281f;
+  --card: rgba(28, 38, 34, 0.88);
+  --surface: rgba(28, 38, 34, 0.88);
+  --surface-strong: #24302c;
+  --ring: rgba(111, 191, 168, 0.28);
   --background: var(--foam);
   --foreground: var(--ink);
 }
@@ -61,6 +98,8 @@
   --color-poop: var(--poop);
   --color-poop-deep: var(--poop-deep);
   --color-poop-soft: var(--poop-soft);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
   --font-sans: var(--font-manrope);
   --font-display: var(--font-fraunces);
 }
@@ -75,6 +114,17 @@ body {
     linear-gradient(180deg, var(--sky) 0%, var(--foam) 40%, #eef4f1 100%);
   background-attachment: fixed;
   min-height: 100vh;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+
+html.dark body {
+  background:
+    radial-gradient(1000px 500px at 10% -10%, #1f3a33 0%, transparent 55%),
+    radial-gradient(800px 420px at 95% 8%, #1a2c3a 0%, transparent 50%),
+    radial-gradient(700px 380px at 50% 100%, #2a3220 0%, transparent 45%),
+    linear-gradient(180deg, #101816 0%, #15201c 45%, #121a17 100%);
 }
 
 @keyframes fade-up {
@@ -162,13 +212,13 @@ body {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface);
   color: var(--pine-deep);
-  border: 1px solid rgba(45, 106, 90, 0.18);
+  border: 1px solid color-mix(in srgb, var(--pine) 25%, transparent);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: white;
+  background: var(--surface-strong);
 }
 
 .btn-danger {
@@ -195,8 +245,8 @@ body {
   padding: 0.45rem 0.85rem;
   font-size: 0.875rem;
   font-weight: 600;
-  border: 1px solid rgba(45, 106, 90, 0.18);
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid color-mix(in srgb, var(--pine) 25%, transparent);
+  background: var(--surface);
   color: var(--muted);
   cursor: pointer;
   transition:

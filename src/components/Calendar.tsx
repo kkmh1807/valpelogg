@@ -57,7 +57,7 @@ export function Calendar({ initialYear, initialMonth }: Props) {
 
   return (
     <section
-      className="panel animate-fade-up-delay border border-pine/10 bg-white/70"
+      className="panel animate-fade-up-delay border border-pine/10 bg-surface"
       aria-label="Kalender"
     >
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -105,10 +105,10 @@ export function Calendar({ initialYear, initialMonth }: Props) {
             <Link
               key={day}
               href={`/dag/${day}`}
-              className={`flex aspect-square flex-col items-center justify-center rounded-2xl text-sm transition hover:bg-white/80 ${
+              className={`flex aspect-square flex-col items-center justify-center rounded-2xl text-sm transition hover:bg-surface ${
                 isToday
                   ? "bg-pine text-white shadow-md shadow-pine/20"
-                  : "bg-white/40 text-ink"
+                  : "bg-surface/70 text-ink"
               }`}
             >
               <span className="font-semibold">{Number(day.slice(-2))}</span>

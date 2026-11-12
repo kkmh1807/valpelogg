@@ -216,7 +216,7 @@ export function DayLog({ day }: Props) {
 
       {/* Dagsregnskap */}
       <section
-        className="panel animate-fade-up border border-pine/15 bg-white/75"
+        className="panel animate-fade-up border border-pine/15 bg-surface"
         aria-label="Dagens regnskap"
       >
         <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-pine-deep">
@@ -297,7 +297,7 @@ export function DayLog({ day }: Props) {
         </div>
 
         {ongoing ? (
-          <div className="animate-soft-pulse rounded-2xl border border-sleep/30 bg-white/80 px-4 py-4">
+          <div className="animate-soft-pulse rounded-2xl border border-sleep/30 bg-surface px-4 py-4">
             <p className="text-sm font-semibold text-sleep-deep">
               💤 Lur pågår
             </p>
@@ -335,12 +335,12 @@ export function DayLog({ day }: Props) {
         )}
 
         {showManualSleep && !ongoing ? (
-          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3">
+          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-surface p-3">
             <label className="text-sm text-muted">
               Starttid
               <input
                 type="datetime-local"
-                className="mt-1 block rounded-lg border border-sleep/40 bg-white px-3 py-2 text-ink"
+                className="mt-1 block rounded-lg border border-sleep/40 bg-surface-strong px-3 py-2 text-ink"
                 value={manualSleepStart}
                 onChange={(e) => setManualSleepStart(e.target.value)}
               />
@@ -370,7 +370,7 @@ export function DayLog({ day }: Props) {
                 {sleepVisible.map((s) => (
                   <li
                     key={s.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5"
                   >
                     <div>
                       <p className="font-medium text-ink">
@@ -481,12 +481,12 @@ export function DayLog({ day }: Props) {
         </div>
 
         {showManualWalk ? (
-          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-white/60 p-3">
+          <div className="flex flex-wrap items-end gap-2 rounded-xl bg-surface p-3">
             <label className="text-sm text-muted">
               Tidspunkt
               <input
                 type="datetime-local"
-                className="mt-1 block rounded-lg border border-walk/40 bg-white px-3 py-2 text-ink"
+                className="mt-1 block rounded-lg border border-walk/40 bg-surface-strong px-3 py-2 text-ink"
                 value={manualWalkAt}
                 onChange={(e) => setManualWalkAt(e.target.value)}
               />
@@ -514,7 +514,7 @@ export function DayLog({ day }: Props) {
                 {walksVisible.map((w) => (
                   <li
                     key={w.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5"
                   >
                     <div>
                       <p className="font-medium text-ink">
@@ -628,7 +628,7 @@ export function DayLog({ day }: Props) {
           {(log?.meals ?? []).map((m) => (
             <li
               key={m.id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/70 px-3 py-2.5"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5"
             >
               <p className="font-medium text-ink">🍖 {formatClock(m.fed_at)}</p>
               <div className="flex flex-wrap gap-1">
@@ -676,7 +676,7 @@ export function DayLog({ day }: Props) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-accident/30 bg-white/70 px-3 py-3">
+          <div className="rounded-2xl border border-accident/30 bg-surface px-3 py-3">
             <p className="text-sm font-semibold text-accident-deep">
               💧 Tisseuhell
             </p>
@@ -835,7 +835,7 @@ function EditDialog({
             {showEnd ? "Start" : "Tidspunkt"}
             <input
               type="datetime-local"
-              className="mt-1 w-full rounded-lg border border-pine/20 bg-white px-3 py-2 text-ink"
+              className="mt-1 w-full rounded-lg border border-pine/20 bg-surface-strong px-3 py-2 text-ink"
               value={start}
               onChange={(e) => setStart(e.target.value)}
             />
@@ -845,7 +845,7 @@ function EditDialog({
               Slutt (tom = pågår)
               <input
                 type="datetime-local"
-                className="mt-1 w-full rounded-lg border border-pine/20 bg-white px-3 py-2 text-ink"
+                className="mt-1 w-full rounded-lg border border-pine/20 bg-surface-strong px-3 py-2 text-ink"
                 value={end}
                 onChange={(e) => setEnd(e.target.value)}
               />

@@ -2,10 +2,11 @@ import { createClient, type Client } from "@libsql/client";
 import { mkdirSync } from "fs";
 import path from "path";
 import { isDemoMode } from "./config";
-import { shiftDayKey } from "./dates";
+import { durationMinutes, shiftDayKey } from "./dates";
 import type {
   AccidentDay,
   AccidentKind,
+  CareDay,
   DayActivity,
   DayLog,
   Meal,
@@ -249,6 +250,50 @@ export async function getAccidentSeries(
     const key = shiftDayKey(startKey, i);
     const row = byDay.get(key);
     series.push({ day: key, pee: row?.pee ?? 0, poop: row?.poop ?? 0 });
+  }
+  return series;
+}
+
+export async function getCareSeries(
+  days: number,
+  endDay: string,
+): Promise<CareDay[]> {
+  const db = await ensureSchema();
+  const startKey = shiftDayKey(endDay, -(days - 1));
+
+  const [sleepRes, walkRes] = await Promise.all([
+    db.execute({
+      sql: `SELECT day, start_at, end_at FROM sleep_sessions WHERE day >= ? AND day <= ?`,
+      args: [startKey, endDay],
+    }),
+    db.execute({
+      sql: `SELECT day, COUNT(*) AS walk_count FROM walks WHERE day >= ? AND day <= ? GROUP BY day`,
+      args: [startKey, endDay],
+    }),
+  ]);
+
+  const sleepByDay = new Map<string, number>();
+  for (const row of sleepRes.rows) {
+    const day = String(row.day);
+    const mins = durationMinutes(
+      String(row.start_at),
+      row.end_at == null ? null : String(row.end_at),
+    );
+    sleepByDay.set(day, (sleepByDay.get(day) ?? 0) + mins);
+  }
+
+  const walksByDay = new Map(
+    walkRes.rows.map((r) => [String(r.day), Number(r.walk_count)]),
+  );
+
+  const series: CareDay[] = [];
+  for (let i = 0; i < days; i++) {
+    const key = shiftDayKey(startKey, i);
+    series.push({
+      day: key,
+      sleepMinutes: sleepByDay.get(key) ?? 0,
+      walkCount: walksByDay.get(key) ?? 0,
+    });
   }
   return series;
 }

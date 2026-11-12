@@ -64,7 +64,7 @@ export function AccidentChart({ endDay, days = 14 }: Props) {
 
   return (
     <section
-      className="panel animate-fade-up-delay mt-6 border border-accident/25 bg-white/70"
+      className="panel animate-fade-up-delay mt-6 border border-accident/25 bg-surface"
       aria-label="Uhell inne over tid"
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -96,8 +96,8 @@ export function AccidentChart({ endDay, days = 14 }: Props) {
             role="img"
             aria-label={`Linjediagram over tisse- og bæsjeuhell de siste ${days} dagene`}
           >
-            {chart.grid.map((g) => (
-              <g key={g.label}>
+            {chart.grid.map((g, i) => (
+              <g key={`grid-${i}-${g.y}`}>
                 <line
                   x1={PAD.left}
                   x2={W - PAD.right}

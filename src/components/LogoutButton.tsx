@@ -1,19 +1,18 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { SESSION_COOKIE } from "@/lib/auth";
+import { logoutAction } from "@/lib/logout-action";
 
-async function logout() {
-  "use server";
-  const jar = await cookies();
-  jar.delete(SESSION_COOKIE);
-  redirect("/login");
-}
+type Props = {
+  className?: string;
+  label?: string;
+};
 
-export function LogoutButton() {
+export function LogoutButton({
+  className = "btn btn-ghost text-sm",
+  label = "Logg ut",
+}: Props) {
   return (
-    <form action={logout}>
-      <button type="submit" className="btn btn-ghost text-sm">
-        Logg ut
+    <form action={logoutAction}>
+      <button type="submit" className={className}>
+        {label}
       </button>
     </form>
   );
