@@ -38,16 +38,19 @@ export function CareCharts({ endDay, days = 14 }: Props) {
     [series],
   );
 
+  const sleepDays = series?.filter((d) => d.sleepMinutes > 0) ?? [];
+  const walkDays = series?.filter((d) => d.walkCount > 0) ?? [];
   const avgSleep =
-    series && series.length > 0
+    sleepDays.length > 0
       ? Math.round(
-          series.reduce((sum, d) => sum + d.sleepMinutes, 0) / series.length,
+          sleepDays.reduce((sum, d) => sum + d.sleepMinutes, 0) /
+            sleepDays.length,
         )
       : 0;
   const avgWalks =
-    series && series.length > 0
+    walkDays.length > 0
       ? (
-          series.reduce((sum, d) => sum + d.walkCount, 0) / series.length
+          walkDays.reduce((sum, d) => sum + d.walkCount, 0) / walkDays.length
         ).toFixed(1)
       : "0";
 
@@ -59,8 +62,14 @@ export function CareCharts({ endDay, days = 14 }: Props) {
         series={sleepPoints}
         strokeVar="var(--sleep)"
         borderClass="border-sleep/25"
-        summary={series ? `Snitt ${formatMinutes(avgSleep)} / dag` : "…"}
-        footer="Total søvntid per kalenderdag (alle lurer den dagen)."
+        summary={
+          series
+            ? sleepDays.length > 0
+              ? `Snitt ${formatMinutes(avgSleep)} / dag med data (${sleepDays.length})`
+              : "Ingen søvn logget"
+            : "…"
+        }
+        footer="Total søvntid per kalenderdag (alle lurer den dagen). Snitt bare over dager med søvn."
         formatY={(v) => {
           const mins = Math.round(v);
           if (mins < 60) return `${mins}m`;
@@ -77,8 +86,14 @@ export function CareCharts({ endDay, days = 14 }: Props) {
         series={walkPoints}
         strokeVar="var(--walk)"
         borderClass="border-walk/25"
-        summary={series ? `Snitt ${avgWalks} turer / dag` : "…"}
-        footer="Antall loggede turer per dag."
+        summary={
+          series
+            ? walkDays.length > 0
+              ? `Snitt ${avgWalks} turer / dag med data (${walkDays.length})`
+              : "Ingen turer logget"
+            : "…"
+        }
+        footer="Antall loggede turer per dag. Snitt bare over dager med tur."
         formatY={(v) => String(Math.round(v))}
         ariaLabel={`Linjediagram over turer de siste ${days} dagene`}
       />

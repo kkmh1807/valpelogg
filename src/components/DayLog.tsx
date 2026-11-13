@@ -438,9 +438,6 @@ export function DayLog({ day }: Props) {
               Siste lur sluttet {formatClock(log!.lastSleepEndAt!)} ·{" "}
               {wakeHint(awakeLevel)}
             </p>
-            <p className="mt-2 text-xs opacity-80">
-              Mål: maks 45–60 min våken om gangen (ca. 18–20 t søvn/døgn)
-            </p>
           </div>
         ) : null}
 
@@ -481,7 +478,8 @@ export function DayLog({ day }: Props) {
                             className={`mt-1.5 inline-flex flex-wrap items-center gap-x-1.5 rounded-lg border px-2 py-1 text-xs font-medium ${wakeTone(wakeBefore.level)}`}
                           >
                             <span>
-                              👀 Våken {formatMinutes(wakeBefore.minutes)} før
+                              👀 {formatMinutes(wakeBefore.minutes)} våken siden
+                              forrige lur
                             </span>
                             <span className="font-normal opacity-90">
                               · {wakeHint(wakeBefore.level)}
@@ -788,7 +786,6 @@ export function DayLog({ day }: Props) {
             <h2 className="font-[family-name:var(--font-fraunces)] text-xl text-accident-deep">
               Uhell inne
             </h2>
-            <p className="text-sm text-muted">Tiss og bæsje — enkel teller</p>
           </div>
         </div>
 
