@@ -91,6 +91,65 @@ export function formatDuration(startIso: string, endIso: string | null): string 
   return formatMinutes(durationMinutes(startIso, endIso));
 }
 
+/** Puppy wake window guidelines: prefer ≤45 min, caution to 60, over after that. */
+export const WAKE_OK_MAX_MIN = 45;
+export const WAKE_WARN_MAX_MIN = 60;
+
+export type WakeLevel = "ok" | "warn" | "over";
+
+export function wakeLevel(mins: number): WakeLevel {
+  if (mins <= WAKE_OK_MAX_MIN) return "ok";
+  if (mins <= WAKE_WARN_MAX_MIN) return "warn";
+  return "over";
+}
+
+export type WakeGap = {
+  fromIso: string;
+  toIso: string;
+  minutes: number;
+  level: WakeLevel;
+};
+
+/** Awake periods between completed naps (chronological). */
+export function wakeGapsBetweenSleep(
+  sessions: { start_at: string; end_at: string | null }[],
+  priorSleepEndAt?: string | null,
+): WakeGap[] {
+  const ordered = [...sessions].sort(
+    (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
+  );
+
+  const gaps: WakeGap[] = [];
+
+  const first = ordered[0];
+  if (priorSleepEndAt && first) {
+    const minutes = durationMinutes(priorSleepEndAt, first.start_at);
+    if (minutes > 0) {
+      gaps.push({
+        fromIso: priorSleepEndAt,
+        toIso: first.start_at,
+        minutes,
+        level: wakeLevel(minutes),
+      });
+    }
+  }
+
+  const completed = ordered.filter((s) => s.end_at != null);
+  for (let i = 0; i < completed.length - 1; i++) {
+    const fromIso = completed[i].end_at as string;
+    const toIso = completed[i + 1].start_at;
+    const minutes = durationMinutes(fromIso, toIso);
+    if (minutes <= 0) continue;
+    gaps.push({
+      fromIso,
+      toIso,
+      minutes,
+      level: wakeLevel(minutes),
+    });
+  }
+  return gaps;
+}
+
 export function monthLabel(year: number, month: number): string {
   const date = new Date(year, month - 1, 1);
   return date.toLocaleDateString("nb-NO", { month: "long", year: "numeric" });

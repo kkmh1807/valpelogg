@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiJson } from "@/lib/api";
 import {
@@ -8,6 +9,10 @@ import {
   formatDayHeading,
   formatDuration,
   formatMinutes,
+  shiftDayKey,
+  wakeGapsBetweenSleep,
+  wakeLevel,
+  type WakeLevel,
   toDayKey,
 } from "@/lib/dates";
 import type {
@@ -31,6 +36,18 @@ function localInputValue(iso: string): string {
 
 function fromLocalInput(value: string): string {
   return new Date(value).toISOString();
+}
+
+function wakeTone(level: WakeLevel): string {
+  if (level === "ok") return "border-walk/40 bg-walk-soft text-walk-deep";
+  if (level === "warn") return "border-honey/50 bg-meal-soft text-honey";
+  return "border-warn/40 bg-[color-mix(in_srgb,var(--warn)_12%,var(--surface))] text-warn";
+}
+
+function wakeHint(level: WakeLevel): string {
+  if (level === "ok") return "Innenfor 45 min";
+  if (level === "warn") return "Nærmer seg 60 min";
+  return "Over 60 min — tid for lur";
 }
 
 export function DayLog({ day }: Props) {
@@ -76,14 +93,18 @@ export function DayLog({ day }: Props) {
     };
   }, [day]);
 
-  // Oppdater regnskap mens en lur pågår
+  // Oppdater regnskap mens lur pågår eller våkenteller går
   const [, setTick] = useState(0);
   useEffect(() => {
-    const hasOngoing = (log?.sleep ?? []).some((s) => s.end_at === null);
-    if (!hasOngoing) return;
+    const hasOngoing =
+      Boolean(log?.ongoingSleep) ||
+      (log?.sleep ?? []).some((s) => s.end_at === null);
+    const trackingAwake =
+      isToday && !hasOngoing && Boolean(log?.lastSleepEndAt);
+    if (!hasOngoing && !trackingAwake) return;
     const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
     return () => window.clearInterval(id);
-  }, [log?.sleep]);
+  }, [log?.sleep, log?.ongoingSleep, log?.lastSleepEndAt, isToday]);
 
   async function withLock(key: string, fn: () => Promise<void>) {
     if (lock.current) return;
@@ -117,6 +138,13 @@ export function DayLog({ day }: Props) {
   const peeAccidents = log?.indoorPeeAccidents ?? 0;
   const poopAccidents = log?.indoorPoopAccidents ?? 0;
   const hasOngoingSleep = (log?.sleep ?? []).some((s) => s.end_at === null);
+  const wakeGaps = wakeGapsBetweenSleep(log?.sleep ?? [], log?.priorSleepEndAt);
+  const awakeSinceLastNapMin =
+    isToday && !ongoing && !hasOngoingSleep && log?.lastSleepEndAt
+      ? durationMinutes(log.lastSleepEndAt, new Date().toISOString())
+      : null;
+  const awakeLevel =
+    awakeSinceLastNapMin != null ? wakeLevel(awakeSinceLastNapMin) : null;
 
   async function startSleep(startAt?: string) {
     await withLock("sleep-start", async () => {
@@ -176,10 +204,7 @@ export function DayLog({ day }: Props) {
     });
   }
 
-  async function confirmDelete(
-    label: string,
-    url: string,
-  ): Promise<void> {
+  async function confirmDelete(label: string, url: string): Promise<void> {
     if (!window.confirm(`Slette ${label}?`)) return;
     await withLock(`del-${url}`, async () => {
       await apiJson(url, { method: "DELETE" });
@@ -195,15 +220,43 @@ export function DayLog({ day }: Props) {
   return (
     <div className="space-y-5">
       <header className="animate-fade-up">
-        <p className="text-sm font-medium uppercase tracking-[0.14em] text-pine">
-          🐶 Dagens logg
-        </p>
         <h1 className="mt-1 font-[family-name:var(--font-fraunces)] text-3xl capitalize text-pine-deep sm:text-4xl">
           {formatDayHeading(day)}
         </h1>
+        <nav className="mt-3 flex items-center gap-2" aria-label="Bytt dag">
+          <Link
+            href={`/dag/${shiftDayKey(day, -1)}`}
+            className="btn btn-ghost min-h-11 flex-1 justify-center px-3 text-sm sm:flex-none"
+          >
+            ← Forrige
+          </Link>
+          {!isToday ? (
+            <Link
+              href={`/dag/${today}`}
+              className="btn btn-secondary min-h-11 flex-1 justify-center px-3 text-sm sm:flex-none"
+            >
+              I dag
+            </Link>
+          ) : null}
+          {day < today ? (
+            <Link
+              href={`/dag/${shiftDayKey(day, 1)}`}
+              className="btn btn-ghost min-h-11 flex-1 justify-center px-3 text-sm sm:flex-none"
+            >
+              Neste →
+            </Link>
+          ) : (
+            <span
+              className="btn btn-ghost min-h-11 flex-1 justify-center px-3 text-sm opacity-40 sm:flex-none"
+              aria-disabled="true"
+            >
+              Neste →
+            </span>
+          )}
+        </nav>
         {!isToday ? (
-          <p className="mt-1 text-sm text-muted">
-            Du ser en tidligere dag. Nye registreringer knyttes til denne dagen.
+          <p className="mt-2 text-sm text-muted">
+            Du ser en annen dag. Nye registreringer knyttes til denne dagen.
           </p>
         ) : null}
       </header>
@@ -233,8 +286,21 @@ export function DayLog({ day }: Props) {
             <p className="mt-0.5 text-xs text-muted">
               {(log?.sleep.length ?? 0) === 0
                 ? "Ingen lurer ennå"
-                : `${log?.sleep.length} ${log?.sleep.length === 1 ? "lur" : "lurer"}${hasOngoingSleep ? " · en pågår" : ""}`}
+                : `${log?.sleep.length} ${log?.sleep.length === 1 ? "lur" : "lurer"}${hasOngoingSleep || ongoing ? " · en pågår" : ""}`}
             </p>
+            {isToday && awakeSinceLastNapMin != null && awakeLevel ? (
+              <p
+                className={`mt-1 text-xs font-medium ${
+                  awakeLevel === "ok"
+                    ? "text-walk-deep"
+                    : awakeLevel === "warn"
+                      ? "text-honey"
+                      : "text-warn"
+                }`}
+              >
+                👀 Våken {formatMinutes(awakeSinceLastNapMin)}
+              </p>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-walk/30 bg-walk-soft px-3 py-3">
@@ -349,12 +415,61 @@ export function DayLog({ day }: Props) {
               type="button"
               className="btn btn-secondary"
               disabled={!manualSleepStart || busy !== null}
-              onClick={() =>
-                void startSleep(fromLocalInput(manualSleepStart))
-              }
+              onClick={() => void startSleep(fromLocalInput(manualSleepStart))}
             >
               Lagre start
             </button>
+          </div>
+        ) : null}
+
+        {isToday && awakeSinceLastNapMin != null && awakeLevel ? (
+          <div
+            className={`rounded-2xl border-2 px-4 py-3 ${wakeTone(awakeLevel)}`}
+            role="status"
+          >
+            <p className="text-sm font-semibold">👀 Våken siden siste lur</p>
+            <p className="mt-1 font-[family-name:var(--font-fraunces)] text-2xl">
+              {formatMinutes(awakeSinceLastNapMin)}
+            </p>
+            <p className="mt-0.5 text-xs opacity-90">
+              Siste lur sluttet {formatClock(log!.lastSleepEndAt!)} ·{" "}
+              {wakeHint(awakeLevel)}
+            </p>
+            <p className="mt-2 text-xs opacity-80">
+              Mål: maks 45–60 min våken om gangen (ca. 18–20 t søvn/døgn)
+            </p>
+          </div>
+        ) : null}
+
+        {isToday && (ongoing || hasOngoingSleep) ? (
+          <p className="text-sm text-muted">
+            Sover nå — våkenteller starter når luren avsluttes.
+          </p>
+        ) : null}
+
+        {wakeGaps.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-sleep-deep">
+              Våkentid mellom lurer
+            </p>
+            <ul className="space-y-1.5">
+              {wakeGaps.map((g) => (
+                <li
+                  key={`${g.fromIso}-${g.toIso}`}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm ${wakeTone(g.level)}`}
+                >
+                  <span>
+                    {formatClock(g.fromIso)} → {formatClock(g.toIso)}
+                  </span>
+                  <span className="font-semibold">
+                    {formatMinutes(g.minutes)}
+                    <span className="ml-2 text-xs font-normal opacity-90">
+                      {wakeHint(g.level)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
@@ -394,7 +509,10 @@ export function DayLog({ day }: Props) {
                         className="btn btn-danger"
                         disabled={busy !== null}
                         onClick={() =>
-                          void confirmDelete("denne luren", `/api/sleep/${s.id}`)
+                          void confirmDelete(
+                            "denne luren",
+                            `/api/sleep/${s.id}`,
+                          )
                         }
                       >
                         Slett
@@ -568,7 +686,10 @@ export function DayLog({ day }: Props) {
                         className="btn btn-danger"
                         disabled={busy !== null}
                         onClick={() =>
-                          void confirmDelete("denne turen", `/api/walks/${w.id}`)
+                          void confirmDelete(
+                            "denne turen",
+                            `/api/walks/${w.id}`,
+                          )
                         }
                       >
                         Slett
@@ -653,7 +774,9 @@ export function DayLog({ day }: Props) {
             </li>
           ))}
           {(log?.meals.length ?? 0) === 0 ? (
-            <li className="text-sm text-muted">Ingen måltider denne dagen ennå 🦴</li>
+            <li className="text-sm text-muted">
+              Ingen måltider denne dagen ennå 🦴
+            </li>
           ) : null}
         </ul>
       </section>
@@ -706,7 +829,9 @@ export function DayLog({ day }: Props) {
           </div>
 
           <div className="rounded-2xl border border-poop/30 bg-poop-soft px-3 py-3">
-            <p className="text-sm font-semibold text-poop-deep">💩 Bæsjeuhell</p>
+            <p className="text-sm font-semibold text-poop-deep">
+              💩 Bæsjeuhell
+            </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -752,9 +877,7 @@ export function DayLog({ day }: Props) {
             });
           }}
           startDefault={localInputValue(editSleep.start_at)}
-          endDefault={
-            editSleep.end_at ? localInputValue(editSleep.end_at) : ""
-          }
+          endDefault={editSleep.end_at ? localInputValue(editSleep.end_at) : ""}
           showEnd
         />
       ) : null}

@@ -27,6 +27,13 @@ export type DayLog = {
   walks: Walk[];
   meals: Meal[];
   ongoingSleep: SleepSession | null;
+  /** Most recent completed nap end (any day) — for current awake timer. */
+  lastSleepEndAt: string | null;
+  /**
+   * End of the nap before this day's first lur (or before "now" if no lur yet).
+   * Used for the first wake window of the day.
+   */
+  priorSleepEndAt: string | null;
   indoorPeeAccidents: number;
   indoorPoopAccidents: number;
 };
