@@ -150,6 +150,18 @@ export function wakeGapsBetweenSleep(
   return gaps;
 }
 
+/** Wake gap keyed by the following nap's `start_at`. */
+export function wakeGapBeforeByStart(
+  sessions: { start_at: string; end_at: string | null }[],
+  priorSleepEndAt?: string | null,
+): Map<string, WakeGap> {
+  const map = new Map<string, WakeGap>();
+  for (const gap of wakeGapsBetweenSleep(sessions, priorSleepEndAt)) {
+    map.set(gap.toIso, gap);
+  }
+  return map;
+}
+
 export function monthLabel(year: number, month: number): string {
   const date = new Date(year, month - 1, 1);
   return date.toLocaleDateString("nb-NO", { month: "long", year: "numeric" });

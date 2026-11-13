@@ -10,7 +10,7 @@ import {
   formatDuration,
   formatMinutes,
   shiftDayKey,
-  wakeGapsBetweenSleep,
+  wakeGapBeforeByStart,
   wakeLevel,
   type WakeLevel,
   toDayKey,
@@ -138,7 +138,10 @@ export function DayLog({ day }: Props) {
   const peeAccidents = log?.indoorPeeAccidents ?? 0;
   const poopAccidents = log?.indoorPoopAccidents ?? 0;
   const hasOngoingSleep = (log?.sleep ?? []).some((s) => s.end_at === null);
-  const wakeGaps = wakeGapsBetweenSleep(log?.sleep ?? [], log?.priorSleepEndAt);
+  const wakeBeforeByStart = wakeGapBeforeByStart(
+    log?.sleep ?? [],
+    log?.priorSleepEndAt,
+  );
   const awakeSinceLastNapMin =
     isToday && !ongoing && !hasOngoingSleep && log?.lastSleepEndAt
       ? durationMinutes(log.lastSleepEndAt, new Date().toISOString())
@@ -447,32 +450,6 @@ export function DayLog({ day }: Props) {
           </p>
         ) : null}
 
-        {wakeGaps.length > 0 ? (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-sleep-deep">
-              Våkentid mellom lurer
-            </p>
-            <ul className="space-y-1.5">
-              {wakeGaps.map((g) => (
-                <li
-                  key={`${g.fromIso}-${g.toIso}`}
-                  className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm ${wakeTone(g.level)}`}
-                >
-                  <span>
-                    {formatClock(g.fromIso)} → {formatClock(g.toIso)}
-                  </span>
-                  <span className="font-semibold">
-                    {formatMinutes(g.minutes)}
-                    <span className="ml-2 text-xs font-normal opacity-90">
-                      {wakeHint(g.level)}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
         {(() => {
           const sleepNewest = [...(log?.sleep ?? [])].reverse();
           const sleepVisible = expandSleep
@@ -482,44 +459,61 @@ export function DayLog({ day }: Props) {
           return (
             <>
               <ul className="space-y-2">
-                {sleepVisible.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5"
-                  >
-                    <div>
-                      <p className="font-medium text-ink">
-                        💤 {formatClock(s.start_at)}
-                        {s.end_at ? ` – ${formatClock(s.end_at)}` : " – pågår"}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {formatDuration(s.start_at, s.end_at) || "—"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        onClick={() => setEditSleep(s)}
-                      >
-                        Endre tid
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        disabled={busy !== null}
-                        onClick={() =>
-                          void confirmDelete(
-                            "denne luren",
-                            `/api/sleep/${s.id}`,
-                          )
-                        }
-                      >
-                        Slett
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                {sleepVisible.map((s) => {
+                  const wakeBefore = wakeBeforeByStart.get(s.start_at);
+                  return (
+                    <li
+                      key={s.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-ink">
+                          💤 {formatClock(s.start_at)}
+                          {s.end_at
+                            ? ` – ${formatClock(s.end_at)}`
+                            : " – pågår"}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {formatDuration(s.start_at, s.end_at) || "—"}
+                        </p>
+                        {wakeBefore ? (
+                          <p
+                            className={`mt-1.5 inline-flex flex-wrap items-center gap-x-1.5 rounded-lg border px-2 py-1 text-xs font-medium ${wakeTone(wakeBefore.level)}`}
+                          >
+                            <span>
+                              👀 Våken {formatMinutes(wakeBefore.minutes)} før
+                            </span>
+                            <span className="font-normal opacity-90">
+                              · {wakeHint(wakeBefore.level)}
+                            </span>
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          onClick={() => setEditSleep(s)}
+                        >
+                          Endre tid
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          disabled={busy !== null}
+                          onClick={() =>
+                            void confirmDelete(
+                              "denne luren",
+                              `/api/sleep/${s.id}`,
+                            )
+                          }
+                        >
+                          Slett
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
                 {sleepNewest.length === 0 ? (
                   <li className="text-sm text-muted">
                     Ingen lurer denne dagen ennå 🌙
