@@ -103,65 +103,6 @@ export function wakeLevel(mins: number): WakeLevel {
   return "over";
 }
 
-export type WakeGap = {
-  fromIso: string;
-  toIso: string;
-  minutes: number;
-  level: WakeLevel;
-};
-
-/** Awake periods between completed naps (chronological). */
-export function wakeGapsBetweenSleep(
-  sessions: { start_at: string; end_at: string | null }[],
-  priorSleepEndAt?: string | null,
-): WakeGap[] {
-  const ordered = [...sessions].sort(
-    (a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
-  );
-
-  const gaps: WakeGap[] = [];
-
-  const first = ordered[0];
-  if (priorSleepEndAt && first) {
-    const minutes = durationMinutes(priorSleepEndAt, first.start_at);
-    if (minutes > 0) {
-      gaps.push({
-        fromIso: priorSleepEndAt,
-        toIso: first.start_at,
-        minutes,
-        level: wakeLevel(minutes),
-      });
-    }
-  }
-
-  const completed = ordered.filter((s) => s.end_at != null);
-  for (let i = 0; i < completed.length - 1; i++) {
-    const fromIso = completed[i].end_at as string;
-    const toIso = completed[i + 1].start_at;
-    const minutes = durationMinutes(fromIso, toIso);
-    if (minutes <= 0) continue;
-    gaps.push({
-      fromIso,
-      toIso,
-      minutes,
-      level: wakeLevel(minutes),
-    });
-  }
-  return gaps;
-}
-
-/** Wake gap keyed by the following nap's `start_at`. */
-export function wakeGapBeforeByStart(
-  sessions: { start_at: string; end_at: string | null }[],
-  priorSleepEndAt?: string | null,
-): Map<string, WakeGap> {
-  const map = new Map<string, WakeGap>();
-  for (const gap of wakeGapsBetweenSleep(sessions, priorSleepEndAt)) {
-    map.set(gap.toIso, gap);
-  }
-  return map;
-}
-
 export function monthLabel(year: number, month: number): string {
   const date = new Date(year, month - 1, 1);
   return date.toLocaleDateString("nb-NO", { month: "long", year: "numeric" });

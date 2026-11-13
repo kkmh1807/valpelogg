@@ -177,18 +177,6 @@ export async function getDayLog(day: string): Promise<DayLog> {
       ? String(lastEndedRes.rows[0].end_at)
       : null;
 
-  let priorSleepEndAt: string | null = null;
-  const firstStart = sleep[0]?.start_at;
-  if (firstStart) {
-    const priorEndedRes = await db.execute({
-      sql: `SELECT end_at FROM sleep_sessions WHERE end_at IS NOT NULL AND end_at < ? ORDER BY end_at DESC LIMIT 1`,
-      args: [firstStart],
-    });
-    if (priorEndedRes.rows.length > 0) {
-      priorSleepEndAt = String(priorEndedRes.rows[0].end_at);
-    }
-  }
-
   return {
     day,
     sleep,
@@ -196,7 +184,6 @@ export async function getDayLog(day: string): Promise<DayLog> {
     meals,
     ongoingSleep,
     lastSleepEndAt,
-    priorSleepEndAt,
     indoorPeeAccidents,
     indoorPoopAccidents,
   };
