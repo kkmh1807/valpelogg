@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import { AppToaster } from "@/components/AppToaster";
 import { DemoBanner } from "@/components/DemoBanner";
 import { isDemoMode } from "@/lib/config";
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col text-ink">
         {isDemoMode ? <DemoBanner /> : null}
         {children}
+        <AppToaster />
       </body>
     </html>
   );

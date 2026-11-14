@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { apiJson } from "@/lib/api";
 import {
   durationMinutes,
@@ -14,6 +15,10 @@ import {
   type WakeLevel,
   toDayKey,
 } from "@/lib/dates";
+import {
+  describeLiveChanges,
+  liveChangeToastClass,
+} from "@/lib/live-log-diff";
 import type {
   AccidentKind,
   DayLog as DayLogType,
@@ -65,23 +70,51 @@ export function DayLog({ day }: Props) {
   const [expandSleep, setExpandSleep] = useState(false);
   const [expandWalks, setExpandWalks] = useState(false);
   const lock = useRef(false);
+  const busyRef = useRef<string | null>(null);
+  const snapshotRef = useRef<string | null>(null);
+  const logRef = useRef<DayLogType | null>(null);
 
   const LIST_PREVIEW = 3;
+  const POLL_MS = 2500;
 
   const today = toDayKey();
   const isToday = day === today;
 
+  busyRef.current = busy;
+
+  const applyLog = useCallback(
+    (data: DayLogType, source: "load" | "self" | "live" = "load") => {
+      const next = JSON.stringify(data);
+      if (snapshotRef.current === next) return;
+      const prev = logRef.current;
+      snapshotRef.current = next;
+      logRef.current = data;
+      setLog(data);
+      if (source === "live" && prev) {
+        for (const change of describeLiveChanges(prev, data)) {
+          toast(change.message, {
+            className: liveChangeToastClass(change.kind),
+            unstyled: false,
+          });
+        }
+      }
+    },
+    [],
+  );
+
   const refresh = useCallback(async () => {
     const data = await apiJson<DayLogType>(`/api/day?day=${day}`);
-    setLog(data);
-  }, [day]);
+    applyLog(data, "self");
+  }, [day, applyLog]);
 
   useEffect(() => {
     let cancelled = false;
+    snapshotRef.current = null;
+    logRef.current = null;
     apiJson<DayLogType>(`/api/day?day=${day}`)
       .then((data) => {
         if (cancelled) return;
-        setLog(data);
+        applyLog(data, "load");
         setError(null);
       })
       .catch((err: Error) => {
@@ -90,7 +123,54 @@ export function DayLog({ day }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [day]);
+  }, [day, applyLog]);
+
+  // Live-sync: hent dagen på nytt mens fanen er synlig
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId: number | null = null;
+
+    async function poll() {
+      if (cancelled) return;
+      if (document.visibilityState !== "visible") return;
+      if (lock.current || busyRef.current) return;
+      try {
+        const data = await apiJson<DayLogType>(`/api/day?day=${day}`);
+        if (cancelled || lock.current || busyRef.current) return;
+        applyLog(data, "live");
+      } catch {
+        // Stille feil under bakgrunnspolling
+      }
+    }
+
+    function start() {
+      if (intervalId != null) return;
+      intervalId = window.setInterval(() => void poll(), POLL_MS);
+    }
+
+    function stop() {
+      if (intervalId == null) return;
+      window.clearInterval(intervalId);
+      intervalId = null;
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        void poll();
+        start();
+      } else {
+        stop();
+      }
+    }
+
+    if (document.visibilityState === "visible") start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      cancelled = true;
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [day, applyLog]);
 
   // Oppdater regnskap mens lur pågår eller våkenteller går
   const [, setTick] = useState(0);
@@ -108,6 +188,7 @@ export function DayLog({ day }: Props) {
   async function withLock(key: string, fn: () => Promise<void>) {
     if (lock.current) return;
     lock.current = true;
+    busyRef.current = key;
     setBusy(key);
     setError(null);
     try {
@@ -117,6 +198,7 @@ export function DayLog({ day }: Props) {
       setError(err instanceof Error ? err.message : "Noe gikk galt.");
     } finally {
       lock.current = false;
+      busyRef.current = null;
       setBusy(null);
     }
   }

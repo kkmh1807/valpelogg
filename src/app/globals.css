@@ -275,3 +275,46 @@ html.dark body {
     animation: none;
   }
 }
+
+/* Live-sync toasts — match aktivitetsfarger */
+.live-toast {
+  border-width: 1px !important;
+  border-style: solid !important;
+  box-shadow: 0 8px 24px rgba(30, 47, 42, 0.12) !important;
+}
+
+.live-toast-sleep {
+  background: var(--sleep-soft) !important;
+  color: var(--sleep-deep) !important;
+  border-color: color-mix(in srgb, var(--sleep) 45%, transparent) !important;
+}
+
+.live-toast-walk {
+  background: var(--walk-soft) !important;
+  color: var(--walk-deep) !important;
+  border-color: color-mix(in srgb, var(--walk) 45%, transparent) !important;
+}
+
+.live-toast-meal {
+  background: var(--meal-soft) !important;
+  color: var(--meal-deep) !important;
+  border-color: color-mix(in srgb, var(--meal) 45%, transparent) !important;
+}
+
+.live-toast-accident {
+  background: var(--accident-soft) !important;
+  color: var(--accident-deep) !important;
+  border-color: color-mix(in srgb, var(--accident) 45%, transparent) !important;
+}
+
+.live-toast-poop {
+  background: var(--poop-soft) !important;
+  color: var(--poop-deep) !important;
+  border-color: color-mix(in srgb, var(--poop) 45%, transparent) !important;
+}
+
+.live-toast-default {
+  background: var(--surface-strong) !important;
+  color: var(--ink) !important;
+  border-color: color-mix(in srgb, var(--pine) 25%, transparent) !important;
+}
