@@ -2,13 +2,14 @@ import { createClient, type Client } from "@libsql/client";
 import { mkdirSync } from "fs";
 import path from "path";
 import { isDemoMode } from "./config";
-import { durationMinutes, shiftDayKey } from "./dates";
+import { durationMinutes, shiftDayKey, toSecondIso } from "./dates";
 import type {
   AccidentDay,
   AccidentKind,
   CareDay,
   DayActivity,
   DayLog,
+  IndoorAccidentEvent,
   Meal,
   SleepSession,
   Walk,
@@ -46,10 +47,18 @@ CREATE TABLE IF NOT EXISTS indoor_accidents (
   poop_count INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS indoor_accident_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  occurred_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_sleep_day ON sleep_sessions(day);
 CREATE INDEX IF NOT EXISTS idx_sleep_ongoing ON sleep_sessions(end_at);
 CREATE INDEX IF NOT EXISTS idx_walks_day ON walks(day);
 CREATE INDEX IF NOT EXISTS idx_meals_day ON meals(day);
+CREATE INDEX IF NOT EXISTS idx_accident_events_day ON indoor_accident_events(day);
 `;
 
 let client: Client | null = null;
@@ -122,27 +131,43 @@ function mapMeal(row: Record<string, unknown>): Meal {
   };
 }
 
+function mapAccidentEvent(
+  row: Record<string, unknown>,
+): IndoorAccidentEvent {
+  return {
+    id: Number(row.id),
+    day: String(row.day),
+    kind: row.kind === "poop" ? "poop" : "pee",
+    occurred_at: String(row.occurred_at),
+  };
+}
+
 export async function getDayLog(day: string): Promise<DayLog> {
   const db = await ensureSchema();
 
-  const [sleepRes, walkRes, mealRes, accidentRes] = await Promise.all([
-    db.execute({
-      sql: `SELECT * FROM sleep_sessions WHERE day = ? ORDER BY start_at ASC`,
-      args: [day],
-    }),
-    db.execute({
-      sql: `SELECT * FROM walks WHERE day = ? ORDER BY started_at ASC`,
-      args: [day],
-    }),
-    db.execute({
-      sql: `SELECT * FROM meals WHERE day = ? ORDER BY fed_at ASC`,
-      args: [day],
-    }),
-    db.execute({
-      sql: `SELECT count, poop_count FROM indoor_accidents WHERE day = ?`,
-      args: [day],
-    }),
-  ]);
+  const [sleepRes, walkRes, mealRes, accidentRes, accidentEventRes] =
+    await Promise.all([
+      db.execute({
+        sql: `SELECT * FROM sleep_sessions WHERE day = ? ORDER BY start_at ASC`,
+        args: [day],
+      }),
+      db.execute({
+        sql: `SELECT * FROM walks WHERE day = ? ORDER BY started_at ASC`,
+        args: [day],
+      }),
+      db.execute({
+        sql: `SELECT * FROM meals WHERE day = ? ORDER BY fed_at ASC`,
+        args: [day],
+      }),
+      db.execute({
+        sql: `SELECT count, poop_count FROM indoor_accidents WHERE day = ?`,
+        args: [day],
+      }),
+      db.execute({
+        sql: `SELECT * FROM indoor_accident_events WHERE day = ? ORDER BY occurred_at ASC, id ASC`,
+        args: [day],
+      }),
+    ]);
 
   const sleep = sleepRes.rows.map((r) =>
     mapSleep(r as unknown as Record<string, unknown>),
@@ -152,6 +177,9 @@ export async function getDayLog(day: string): Promise<DayLog> {
   );
   const meals = mealRes.rows.map((r) =>
     mapMeal(r as unknown as Record<string, unknown>),
+  );
+  const accidentEvents = accidentEventRes.rows.map((r) =>
+    mapAccidentEvent(r as unknown as Record<string, unknown>),
   );
   const indoorPeeAccidents =
     accidentRes.rows.length > 0 ? Number(accidentRes.rows[0].count) : 0;
@@ -186,6 +214,7 @@ export async function getDayLog(day: string): Promise<DayLog> {
     lastSleepEndAt,
     indoorPeeAccidents,
     indoorPoopAccidents,
+    accidentEvents,
   };
 }
 
@@ -212,14 +241,42 @@ export async function setIndoorAccident(
   const db = await ensureSchema();
   const safe = Math.max(0, Math.min(99, Math.floor(value)));
   const current = await getIndoorAccidentCounts(day);
+  const prevKind = kind === "pee" ? current.pee : current.poop;
   const next = {
     pee: kind === "pee" ? safe : current.pee,
     poop: kind === "poop" ? safe : current.poop,
   };
+  const delta = safe - prevKind;
+
+  if (delta > 0) {
+    const at = toSecondIso();
+    for (let i = 0; i < delta; i++) {
+      await db.execute({
+        sql: `INSERT INTO indoor_accident_events (day, kind, occurred_at) VALUES (?, ?, ?)`,
+        args: [day, kind, at],
+      });
+    }
+  } else if (delta < 0) {
+    const remove = Math.abs(delta);
+    const latest = await db.execute({
+      sql: `SELECT id FROM indoor_accident_events WHERE day = ? AND kind = ? ORDER BY occurred_at DESC, id DESC LIMIT ?`,
+      args: [day, kind, remove],
+    });
+    for (const row of latest.rows) {
+      await db.execute({
+        sql: `DELETE FROM indoor_accident_events WHERE id = ?`,
+        args: [row.id],
+      });
+    }
+  }
 
   if (next.pee === 0 && next.poop === 0) {
     await db.execute({
       sql: `DELETE FROM indoor_accidents WHERE day = ?`,
+      args: [day],
+    });
+    await db.execute({
+      sql: `DELETE FROM indoor_accident_events WHERE day = ?`,
       args: [day],
     });
     return next;

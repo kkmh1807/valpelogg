@@ -26,6 +26,7 @@ import type {
   SleepSession,
   Walk,
 } from "@/lib/types";
+import { DayTimeline } from "@/components/DayTimeline";
 
 type Props = {
   day: string;
@@ -69,6 +70,7 @@ export function DayLog({ day }: Props) {
   const [editMeal, setEditMeal] = useState<Meal | null>(null);
   const [expandSleep, setExpandSleep] = useState(false);
   const [expandWalks, setExpandWalks] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
   const lock = useRef(false);
   const busyRef = useRef<string | null>(null);
   const snapshotRef = useRef<string | null>(null);
@@ -352,9 +354,19 @@ export function DayLog({ day }: Props) {
         className="panel animate-fade-up border border-pine/15 bg-surface"
         aria-label="Dagens regnskap"
       >
-        <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-pine-deep">
-          📊 Dagens regnskap
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-[family-name:var(--font-fraunces)] text-lg text-pine-deep">
+            📊 Dagens regnskap
+          </h2>
+          <button
+            type="button"
+            className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-pine-deep transition hover:bg-pine/10"
+            aria-expanded={showTimeline}
+            onClick={() => setShowTimeline((v) => !v)}
+          >
+            {showTimeline ? "Skjul tidslinje" : "⏱️ Tidslinje"}
+          </button>
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-sleep/30 bg-sleep-soft px-3 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-sleep-deep">
@@ -423,6 +435,7 @@ export function DayLog({ day }: Props) {
             </p>
           </div>
         </div>
+        {showTimeline && log ? <DayTimeline log={log} /> : null}
       </section>
 
       {/* Sleep */}

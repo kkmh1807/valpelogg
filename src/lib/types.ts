@@ -31,9 +31,19 @@ export type DayLog = {
   lastSleepEndAt: string | null;
   indoorPeeAccidents: number;
   indoorPoopAccidents: number;
+  /** Timed accident events for timeline (new registrations). */
+  accidentEvents: IndoorAccidentEvent[];
 };
 
 export type AccidentKind = "pee" | "poop";
+
+/** Timed indoor accident — stored for timeline, not shown in counter UI. */
+export type IndoorAccidentEvent = {
+  id: number;
+  day: string;
+  kind: AccidentKind;
+  occurred_at: string;
+};
 
 export type AccidentDay = {
   day: string;

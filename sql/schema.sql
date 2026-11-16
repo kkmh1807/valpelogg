@@ -31,7 +31,16 @@ CREATE TABLE IF NOT EXISTS indoor_accidents (
   poop_count INTEGER NOT NULL DEFAULT 0
 );
 
+-- Individual accident events (timestamps for timeline; UI stays counter-only)
+CREATE TABLE IF NOT EXISTS indoor_accident_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  occurred_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_sleep_day ON sleep_sessions(day);
 CREATE INDEX IF NOT EXISTS idx_sleep_ongoing ON sleep_sessions(end_at);
 CREATE INDEX IF NOT EXISTS idx_walks_day ON walks(day);
 CREATE INDEX IF NOT EXISTS idx_meals_day ON meals(day);
+CREATE INDEX IF NOT EXISTS idx_accident_events_day ON indoor_accident_events(day);
